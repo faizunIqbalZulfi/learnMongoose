@@ -11,6 +11,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+//register
 app.post("/users", async (req, res) => {
   const user = new User(req.body);
 
@@ -23,6 +24,7 @@ app.post("/users", async (req, res) => {
   }
 });
 
+//login
 app.post("/users/login", async (req, res) => {
   // Login user
   const { email, password } = req.body; // destruct property
@@ -35,6 +37,7 @@ app.post("/users/login", async (req, res) => {
   }
 });
 
+//add task
 app.post("/tasks/:userId", async (req, res) => {
   try {
     const user = await User.findById(req.params.userId);
@@ -51,17 +54,22 @@ app.post("/tasks/:userId", async (req, res) => {
   }
 });
 
+//show task
 app.get("/tasks/:userId", async (req, res) => {
   try {
     const user = await User.findOne({ _id: req.params.userId })
-      .populate({ path: "tasks", options: { sort: { completed: false } } })
+      .populate({
+        path: "tasks",
+        // match: { completed: false },
+        options: { sort: { completed: false }, limit: 5 }
+      })
       .exec();
     res.send(user.tasks);
   } catch (e) {}
 });
 
+//delete task
 app.delete("/tasks", async (req, res) => {
-  // Delete task
   try {
     const task = await Task.findOneAndDelete({ _id: req.body.taskid });
     const user = await User.findOne({ _id: req.body.owner });
@@ -80,6 +88,7 @@ app.delete("/tasks", async (req, res) => {
   }
 });
 
+//edit task
 app.patch("/tasks/:taskid/:userid", async (req, res) => {
   const updates = Object.keys(req.body);
   const allowedUpdates = ["description", "completed"];
@@ -108,6 +117,7 @@ app.patch("/tasks/:taskid/:userid", async (req, res) => {
   } catch (e) {}
 });
 
+//add avatar
 const upload = multer({
   limits: {
     fileSize: 1000000
@@ -119,7 +129,6 @@ const upload = multer({
     cb(undefined, cb);
   }
 });
-
 app.post("/users/:userId/avatar", upload.single("avatar"), async (req, res) => {
   try {
     const buffer = await sharp(req.file.buffer)
@@ -134,13 +143,31 @@ app.post("/users/:userId/avatar", upload.single("avatar"), async (req, res) => {
 
     user.avatar = buffer;
     await user.save();
+    // res.set("Content-Type", "image/png");
+
+    // res.send(user.avatar);
     res.send("Upload Success !");
+
+    await app.get("/users/:userId/avatar", async (req, res) => {
+      try {
+        const user = await User.findById(req.params.userId);
+        if (!user) {
+          throw new Error("not found");
+        }
+        res.set("Content-Type", "image/png");
+        res.send(user.avatar);
+        res.render("index.html");
+      } catch (e) {
+        res.send(e);
+      }
+    });
   } catch (e) {
     res.send(e);
   }
 });
 
-app.get("/users/:userId/avatar", async (req, res) => {
+//show avatar
+app.get("/users/:userId/avatar/:ea", async (req, res) => {
   try {
     const user = await User.findById(req.params.userId);
     if (!user) {
@@ -154,6 +181,22 @@ app.get("/users/:userId/avatar", async (req, res) => {
   }
 });
 
+//delete avatar
+app.delete("/avatar/:userId", async (req, res) => {
+  try {
+    const user = await User.findOneAndUpdate(
+      {
+        _id: req.params.userId
+      },
+      { $set: { avatar: "" } }
+    );
+    res.send(user);
+  } catch (e) {
+    console.log();
+  }
+});
+
+//delete user
 app.delete("/users/:userId/delete", async (req, res) => {
   const { userId } = req.params;
 
@@ -167,14 +210,24 @@ app.delete("/users/:userId/delete", async (req, res) => {
   } catch (e) {}
 });
 
+//edit user
 app.patch("/users/:userId", async (req, res) => {
   console.log(req.body);
 
-  const updates = Object.keys(req.body);
-  const allowedUpdates = ["name", "age"];
-  const isValidOperation = updates.every(update =>
-    allowedUpdates.includes(update)
-  );
+  const { password } = req.body;
+  if (password === "") {
+    var updates = Object.keys(req.body);
+    var allowedUpdates = ["name", "age", "email"];
+    var isValidOperation = updates.every(update =>
+      allowedUpdates.includes(update)
+    );
+  } else {
+    var updates = Object.keys(req.body);
+    var allowedUpdates = ["name", "age", "email", "password"];
+    var isValidOperation = updates.every(update =>
+      allowedUpdates.includes(update)
+    );
+  }
 
   if (!isValidOperation) {
     return res.status(400).send({ err: "Invalid request!" });
@@ -196,34 +249,34 @@ app.patch("/users/:userId", async (req, res) => {
   } catch (e) {}
 });
 
-app.patch("/avatar/:userId", async (req, res) => {
-  console.log(req.body);
+// app.patch("/avatar/:userId", async (req, res) => {
+//   console.log(req.body);
 
-  const updates = Object.keys(req.body);
-  const allowedUpdates = ["avatar"];
-  const isValidOperation = updates.every(update =>
-    allowedUpdates.includes(update)
-  );
+//   const updates = Object.keys(req.body);
+//   const allowedUpdates = ["avatar"];
+//   const isValidOperation = updates.every(update =>
+//     allowedUpdates.includes(update)
+//   );
 
-  if (!isValidOperation) {
-    return res.status(400).send({ err: "Invalid request!" });
-  }
+//   if (!isValidOperation) {
+//     return res.status(400).send({ err: "Invalid request!" });
+//   }
 
-  try {
-    const user = await User.findOne({
-      _id: req.params.userId
-    });
+//   try {
+//     const user = await User.findOne({
+//       _id: req.params.userId
+//     });
 
-    if (!user) {
-      return res.status(404).send("Update Request");
-    }
+//     if (!user) {
+//       return res.status(404).send("Update Request");
+//     }
 
-    updates.forEach(update => (user[update] = req.body[update]));
-    await user.save();
+//     updates.forEach(update => (user[update] = req.body[update]));
+//     await user.save();
 
-    res.send(user);
-  } catch (e) {}
-});
+//     res.send(user);
+//   } catch (e) {}
+// });
 
 // app.get("/users/:userId", async (req, res) => {
 //   try {

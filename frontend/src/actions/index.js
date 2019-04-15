@@ -30,13 +30,15 @@ export const onLogin = (email, password) => {
       cookie.set("masihLogin", res.data.name, { path: "/" });
       cookie.set("idLogin", res.data._id, { path: "/" });
       cookie.set("ageLogin", res.data.age, { path: "/" });
+      cookie.set("emailLogin", res.data.email, { path: "/" });
 
       dispatch({
         type: "LOGIN_SUCCESS",
         payload: {
           id: res.data._id,
           name: res.data.name,
-          age: res.data.age
+          age: res.data.age,
+          email: res.data.email
         }
       });
     } catch (e) {
@@ -45,22 +47,35 @@ export const onLogin = (email, password) => {
   };
 };
 
-export const onEdit = (name, age, userId) => {
+export const onEdit = (name, age, email, password, userId) => {
   return async dispatch => {
     try {
-      const res = await axios.patch(`/users/${userId}`, {
-        name,
-        age
-      });
+      if (password === "") {
+        var res = await axios.patch(`/users/${userId}`, {
+          name,
+          age,
+          email
+        });
+      } else {
+        var res = await axios.patch(`/users/${userId}`, {
+          name,
+          age,
+          email,
+          password
+        });
+      }
       cookie.set("masihLogin", res.data.name, { path: "/" });
       cookie.set("idLogin", res.data._id, { path: "/" });
       cookie.set("ageLogin", res.data.age, { path: "/" });
+      cookie.set("emailLogin", res.data.email, { path: "/" });
+
       dispatch({
         type: "EDIT_SUCCESS",
         payload: {
           id: res.data._id,
           name: res.data.name,
-          age: res.data.age
+          age: res.data.age,
+          email: res.data.email
         }
       });
     } catch (e) {
@@ -93,14 +108,15 @@ export const logout = () => {
   };
 };
 
-export const keepLogin = (name, id, age) => {
+export const keepLogin = (name, id, age, email) => {
   if (name === undefined || id === undefined) {
     return {
       type: "KEEP_LOGIN",
       payload: {
         id: "",
         name: "",
-        age: 0
+        age: 0,
+        email: ""
       }
     };
   }
@@ -110,7 +126,8 @@ export const keepLogin = (name, id, age) => {
     payload: {
       id,
       name,
-      age
+      age,
+      email
     }
   };
 };

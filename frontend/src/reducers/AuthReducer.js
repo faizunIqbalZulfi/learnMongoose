@@ -1,7 +1,8 @@
 const init = {
   id: "",
   name: "",
-  age: ""
+  age: "",
+  email: ""
   // avatar: "",
   // updatedAt: ""
 };
@@ -13,14 +14,16 @@ export default (state = init, action) => {
         ...state,
         id: action.payload.id,
         name: action.payload.name,
-        age: action.payload.age
+        age: action.payload.age,
+        email: action.payload.email
       };
     case "KEEP_LOGIN":
       return {
         ...state,
         id: action.payload.id,
         name: action.payload.name,
-        age: action.payload.age
+        age: action.payload.age,
+        email: action.payload.email
       };
     case "EDIT_SUCCESS":
       return {

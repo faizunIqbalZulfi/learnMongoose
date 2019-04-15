@@ -17,7 +17,8 @@ class App extends Component {
     this.props.keepLogin(
       cookie.get("masihLogin"),
       cookie.get("idLogin"),
-      cookie.get("ageLogin")
+      cookie.get("ageLogin"),
+      cookie.get("emailLogin")
     );
   }
 

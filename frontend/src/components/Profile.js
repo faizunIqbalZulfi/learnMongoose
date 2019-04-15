@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 import { Button } from "reactstrap";
-import { Redirect } from "react-router-dom";
+import { Redirect, Link } from "react-router-dom";
 import cookies from "universal-cookie";
 import axios from "../config/axios";
 import { connect } from "react-redux";
@@ -10,12 +10,16 @@ const cookie = new cookies();
 
 class Profile extends Component {
   state = {
-    edit: true
+    edit: true,
+    editPass: true,
+    editAvatar: 0
   };
 
   uploadFile = async () => {
     const formData = new FormData();
     var imagefile = this.gambar;
+
+    const date = new Date().getTime();
 
     formData.append("avatar", imagefile.files[0]);
     try {
@@ -24,23 +28,25 @@ class Profile extends Component {
           "Content-Type": "multipart/form-data"
         }
       });
+      this.setState({ editAvatar: date });
+      console.log(date);
     } catch (e) {
       console.log("upload gagal");
     }
   };
 
   deleteFile = async userId => {
+    const date = new Date().getTime();
     try {
-      axios.patch(`/avatar/${userId}`, {
-        avatar: null
-      });
+      await axios.delete(`/avatar/${userId}`);
+      this.setState({ editAvatar: date });
     } catch (e) {
       console.log(e);
     }
   };
 
   profile = () => {
-    const { name, age, id } = this.props.user;
+    const { name, age, id, email } = this.props.user;
     if (this.state.edit) {
       return (
         <div>
@@ -91,6 +97,35 @@ class Profile extends Component {
             defaultValue={age}
           />
         </li>
+        <li class="list-group-item pl-0">
+          <input
+            type="text"
+            class="form-control"
+            ref={input => {
+              this.email = input;
+            }}
+            defaultValue={email}
+          />
+        </li>
+        <li hidden={this.state.editPass} class="list-group-item pl-0">
+          <input
+            type="password"
+            class="form-control"
+            ref={input => {
+              this.pass = input;
+            }}
+            placeholder="masukan password"
+          />
+        </li>
+        <li class="list-group-item pl-0">
+          <Button
+            onClick={() => {
+              this.setState({ editPass: !this.state.editPass });
+            }}
+          >
+            edit password
+          </Button>
+        </li>
         <li class="list-group-item px-0">
           <div class="d-flex justify-content-center">
             <Button
@@ -119,7 +154,15 @@ class Profile extends Component {
   saveProfile = async userId => {
     const name = this.name.value;
     const age = this.age.value;
-    this.props.onEdit(name, age, userId);
+    const email = this.email.value;
+    const password = this.pass.value;
+
+    console.log(age);
+
+    console.log(email);
+    console.log(password);
+
+    this.props.onEdit(name, age, email, password, userId);
     this.setState({ edit: !this.state.edit });
   };
 
@@ -131,7 +174,7 @@ class Profile extends Component {
             <img
               src={`http://localhost:2009/users/${cookie.get(
                 "idLogin"
-              )}/avatar`}
+              )}/avatar/${this.state.editAvatar}`}
               class="card-img-top"
               alt="..."
             />

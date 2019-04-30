@@ -156,7 +156,6 @@ app.post("/users/:userId/avatar", upload.single("avatar"), async (req, res) => {
         }
         res.set("Content-Type", "image/png");
         res.send(user.avatar);
-        res.render("index.html");
       } catch (e) {
         res.send(e);
       }
